@@ -1,0 +1,50 @@
+{
+  "schema": "handoff-review-witness/v1",
+  "model_version": "1.0.0",
+  "generator": "handoff_review.py",
+  "kind": "handoff_effective",
+  "core_digest": null,
+  "bootstrap_note": "Unpinned bootstrap copy. Run `python handoff_review.py all` to regenerate with a pinned core_digest; independent verification already replays raw events + oracle.",
+  "core": {
+    "witness_id": "W1-HANDOFF-EFFECTIVE",
+    "title_zh": "最小见证一：交接在批准并执行后于精确日班身份上生效",
+    "claim": {
+      "request_id": "W1-ACCESS",
+      "expected_allowed": true,
+      "expected_code": "allowed_team_permission",
+      "minimal_event_count": 3,
+      "minimality_confirmed": true
+    },
+    "semantics": {
+      "window": "half_open [start,end)",
+      "order_visibility": "request sees only earlier ledger events",
+      "times_separated": ["approved_at", "executed_at", "read_watermark"]
+    },
+    "entities": [
+      {"kind": "assignment", "assignment_id": "ASG-DAY-IC", "org": "ORG-ALPHA", "team": "TEAM-OPS", "person": "trustee.renee", "post": "incident_commander", "shift": "day"},
+      {"kind": "assignment", "assignment_id": "ASG-NIGHT-IC", "org": "ORG-ALPHA", "team": "TEAM-OPS", "person": "trustee.renee", "post": "incident_commander", "shift": "night"},
+      {"kind": "assignment", "assignment_id": "ASG-DAY-OPERATOR", "org": "ORG-ALPHA", "team": "TEAM-OPS", "person": "trustee.renee", "post": "operator", "shift": "day"},
+      {"kind": "assignment", "assignment_id": "ASG-BETA-IC", "org": "ORG-BETA", "team": "TEAM-B", "person": "trustee.renee", "post": "incident_commander", "shift": "day"},
+      {"kind": "open_handoff", "handoff_id": "HO-1", "org": "ORG-ALPHA", "team": "TEAM-OPS", "trustee": "trustee.renee", "assignment_id": "ASG-DAY-IC", "from_account": "SA-SYNTH-07", "team_capabilities": ["ticket.handle", "ticket.read"], "exception_id": "EX-1", "exception_capability": "refund.override", "requested_window": [20, 30]}
+    ],
+    "trace": [
+      {"kind": "approve", "handoff_id": "HO-1", "approved_at": 10, "approver": "manager.wang", "window_start": 20, "window_end": 30},
+      {"kind": "execute", "handoff_id": "HO-1", "executed_at": 15, "executor": "handoff-bot"},
+      {"kind": "access", "request_id": "W1-ACCESS", "at": 16, "org": "ORG-ALPHA", "person": "trustee.renee", "assignment_id": "ASG-DAY-IC", "capability": "ticket.handle"}
+    ],
+    "observed_decision": {
+      "allowed": true,
+      "code": "allowed_team_permission",
+      "reason_zh": "允许：交接已批准并执行，精确作业身份持有该队内权限",
+      "request_id": "W1-ACCESS",
+      "provenance": {"org": "ORG-ALPHA", "assignment_id": "ASG-DAY-IC", "post": "incident_commander", "shift": "day", "capability": "ticket.handle", "handoff_id": "HO-1", "approved_at": 10, "executed_at": 15}
+    },
+    "necessity_checks": [
+      {"mutation": "remove_approval", "flipped_to_deny": true, "code_after_mutation": "ticket_not_approved"},
+      {"mutation": "remove_execution", "flipped_to_deny": true, "code_after_mutation": "handoff_not_executed"},
+      {"mutation": "access_before_executed_at", "flipped_to_deny": true, "code_after_mutation": "before_execution_time"},
+      {"mutation": "act_in_night_shift_instead", "flipped_to_deny": true, "code_after_mutation": "scope_permission_not_inherited"}
+    ],
+    "shortest_allow_event_count_found": 3
+  }
+}
